@@ -20,9 +20,15 @@ class _ContactUpdatePageState extends State<ContactUpdatePage> {
   late TextEditingController nameController;
   late TextEditingController phoneController;
   late TextEditingController emailController;
-  late TextEditingController addressController;
-  late TextEditingController avatarController;
 
+  // 分字段地址控制器
+  late TextEditingController streetController;
+  late TextEditingController cityController;
+  late TextEditingController stateController;
+  late TextEditingController countryController;
+  late TextEditingController postalCodeController;
+
+  late TextEditingController avatarController;
   File? avatarPreview;
 
   @override
@@ -33,11 +39,17 @@ class _ContactUpdatePageState extends State<ContactUpdatePage> {
     final phoneRaw = widget.contact.phone.startsWith('+60 ')
         ? widget.contact.phone.substring(4)
         : widget.contact.phone;
-
     phoneController = TextEditingController(text: phoneRaw);
     emailController = TextEditingController(text: widget.contact.email);
-    addressController = TextEditingController(text: widget.contact.address);
     avatarController = TextEditingController(text: widget.contact.avatar);
+
+    // 拆分地址字段
+    final addressParts = widget.contact.address.split(',').map((e) => e.trim()).toList();
+    streetController = TextEditingController(text: addressParts.length > 0 ? addressParts[0] : '');
+    cityController = TextEditingController(text: addressParts.length > 1 ? addressParts[1] : '');
+    stateController = TextEditingController(text: addressParts.length > 2 ? addressParts[2] : '');
+    countryController = TextEditingController(text: addressParts.length > 3 ? addressParts[3] : '');
+    postalCodeController = TextEditingController(text: addressParts.length > 4 ? addressParts[4] : '');
 
     if (widget.contact.avatar.isNotEmpty) {
       getApplicationDocumentsDirectory().then((appDir) {
@@ -73,6 +85,44 @@ class _ContactUpdatePageState extends State<ContactUpdatePage> {
     });
   }
 
+  Future<void> _updateContact() async {
+    final rawPhone = phoneController.text.trim();
+    final formattedPhone = '+60 $rawPhone';
+    final email = emailController.text.trim();
+
+    final phoneRegex = RegExp(r'^\d{9,10}$');
+    final emailRegex = RegExp(r'^\S+@\S+\.\S+$');
+
+    if (!phoneRegex.hasMatch(rawPhone)) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Invalid phone number format.')),
+      );
+      return;
+    }
+
+    if (!emailRegex.hasMatch(email)) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Invalid email format.')),
+      );
+      return;
+    }
+
+    final formattedAddress =
+        '${streetController.text.trim()}, ${cityController.text.trim()}, ${stateController.text.trim()}, ${countryController.text.trim()}, ${postalCodeController.text.trim()}';
+
+    final updatedContact = Contact(
+      id: widget.contact.id,
+      name: nameController.text.trim(),
+      phone: formattedPhone,
+      email: email,
+      address: formattedAddress,
+      avatar: avatarController.text,
+    );
+
+    await DBHelper().updateContact(updatedContact);
+    Navigator.pop(context, true);
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -103,71 +153,24 @@ class _ContactUpdatePageState extends State<ContactUpdatePage> {
               child: const Text('Change Avatar'),
             ),
             const SizedBox(height: 20),
-            TextField(
-              controller: nameController,
-              decoration: const InputDecoration(labelText: 'Name'),
-            ),
+            TextField(controller: nameController, decoration: const InputDecoration(labelText: 'Name')),
             TextField(
               controller: phoneController,
               keyboardType: TextInputType.phone,
-              decoration: const InputDecoration(
-                labelText: 'Phone (+60)',
-                hintText: 'e.g. 1127309358',
-              ),
-              inputFormatters: [
-                FilteringTextInputFormatter.digitsOnly,
-                LengthLimitingTextInputFormatter(10),
-              ],
+              decoration: const InputDecoration(labelText: 'Phone (+60)', hintText: 'e.g. 1127309358'),
+              inputFormatters: [FilteringTextInputFormatter.digitsOnly, LengthLimitingTextInputFormatter(10)],
             ),
-            TextField(
-              controller: emailController,
-              keyboardType: TextInputType.emailAddress,
-              decoration: const InputDecoration(
-                labelText: 'Email',
-                hintText: 'e.g. paul@google.com',
-              ),
-            ),
-            TextField(
-              controller: addressController,
-              decoration: const InputDecoration(labelText: 'Address'),
-            ),
+            TextField(controller: emailController, keyboardType: TextInputType.emailAddress, decoration: const InputDecoration(labelText: 'Email')),
+            const SizedBox(height: 20),
+            const Text('Address', style: TextStyle(fontWeight: FontWeight.bold)),
+            TextField(controller: streetController, decoration: const InputDecoration(labelText: 'Street')),
+            TextField(controller: cityController, decoration: const InputDecoration(labelText: 'City')),
+            TextField(controller: stateController, decoration: const InputDecoration(labelText: 'State')),
+            TextField(controller: countryController, decoration: const InputDecoration(labelText: 'Country')),
+            TextField(controller: postalCodeController, decoration: const InputDecoration(labelText: 'Postal Code')),
             const SizedBox(height: 20),
             ElevatedButton(
-              onPressed: () async {
-                final rawPhone = phoneController.text.trim();
-                final formattedPhone = '+60 $rawPhone';
-                final email = emailController.text.trim();
-
-                final phoneRegex = RegExp(r'^\d{9,10}$');
-                final emailRegex = RegExp(r'^\S+@\S+\.\S+$');
-
-                if (!phoneRegex.hasMatch(rawPhone)) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                        content: Text('Invalid phone number format.')),
-                  );
-                  return;
-                }
-
-                if (!emailRegex.hasMatch(email)) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Invalid email format.')),
-                  );
-                  return;
-                }
-
-                final updatedContact = Contact(
-                  id: widget.contact.id,
-                  name: nameController.text.trim(),
-                  phone: formattedPhone,
-                  email: email,
-                  address: addressController.text.trim(),
-                  avatar: avatarController.text,
-                );
-
-                await DBHelper().updateContact(updatedContact);
-                Navigator.pop(context, true);
-              },
+              onPressed: _updateContact,
               child: const Text('Update'),
             ),
           ],
@@ -176,6 +179,7 @@ class _ContactUpdatePageState extends State<ContactUpdatePage> {
     );
   }
 }
+
 
 
 

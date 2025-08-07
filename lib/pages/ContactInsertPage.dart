@@ -19,7 +19,14 @@ class _ContactInsertPageState extends State<ContactInsertPage> {
   final _nameController = TextEditingController();
   final _phoneController = TextEditingController();
   final _emailController = TextEditingController();
-  final _addressController = TextEditingController();
+
+  // 分字段地址输入
+  final _streetController = TextEditingController();
+  final _cityController = TextEditingController();
+  final _stateController = TextEditingController();
+  final _countryController = TextEditingController();
+  final _postalCodeController = TextEditingController();
+
   File? _avatarImage;
 
   Future<void> _pickImage() async {
@@ -40,7 +47,7 @@ class _ContactInsertPageState extends State<ContactInsertPage> {
         _avatarImage = newImage;
       });
 
-      print('Saved avatar to: $newPath');
+      print('✅ Saved avatar to: $newPath');
     }
   }
 
@@ -73,11 +80,14 @@ class _ContactInsertPageState extends State<ContactInsertPage> {
         avatarRelativePath = p.relative(_avatarImage!.path, from: appDir.path);
       }
 
+      final fullAddress =
+          '${_streetController.text.trim()}, ${_cityController.text.trim()}, ${_stateController.text.trim()}, ${_countryController.text.trim()}, ${_postalCodeController.text.trim()}';
+
       final newContact = Contact(
         name: _nameController.text.trim(),
         phone: formattedPhone,
         email: email,
-        address: _addressController.text.trim(),
+        address: fullAddress,
         avatar: avatarRelativePath,
       );
 
@@ -137,10 +147,13 @@ class _ContactInsertPageState extends State<ContactInsertPage> {
                 ),
                 keyboardType: TextInputType.emailAddress,
               ),
-              TextFormField(
-                controller: _addressController,
-                decoration: const InputDecoration(labelText: 'Address'),
-              ),
+              const SizedBox(height: 20),
+              const Text('Address', style: TextStyle(fontWeight: FontWeight.bold)),
+              TextFormField(controller: _streetController, decoration: const InputDecoration(labelText: 'Street')),
+              TextFormField(controller: _cityController, decoration: const InputDecoration(labelText: 'City')),
+              TextFormField(controller: _stateController, decoration: const InputDecoration(labelText: 'State')),
+              TextFormField(controller: _countryController, decoration: const InputDecoration(labelText: 'Country')),
+              TextFormField(controller: _postalCodeController, decoration: const InputDecoration(labelText: 'Postal Code')),
               const SizedBox(height: 20),
               ElevatedButton(
                 onPressed: _saveContact,
@@ -153,6 +166,7 @@ class _ContactInsertPageState extends State<ContactInsertPage> {
     );
   }
 }
+
 
 
 
