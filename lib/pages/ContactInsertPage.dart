@@ -1,5 +1,7 @@
 import 'dart:io';
+
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:path_provider/path_provider.dart';
 import '../models/contact.dart';
@@ -27,12 +29,12 @@ class _ContactInsertPageState extends State<ContactInsertPage> {
     if (pickedFile == null) return;
 
     try {
-      // ✅ 第 1 段：保存图片到本地持久目录
       final appDir = await getApplicationDocumentsDirectory();
-      final fileName = DateTime.now().microsecondsSinceEpoch.toString() + '.jpg';
-      final savedImage = await File(pickedFile.path).copy('${appDir.path}/$fileName');
+      final fileName =
+          DateTime.now().microsecondsSinceEpoch.toString() + '.jpg';
+      final savedImage =
+          await File(pickedFile.path).copy('${appDir.path}/$fileName');
 
-      // ✅ 第 2 段：将路径写入表单控制器
       avatarController.text = savedImage.path;
       print('Saved avatar path: ${savedImage.path}');
       print('File exists: ${await savedImage.exists()}');
@@ -55,9 +57,8 @@ class _ContactInsertPageState extends State<ContactInsertPage> {
             Center(
               child: CircleAvatar(
                 radius: 50,
-                backgroundImage: avatarPreview != null
-                    ? FileImage(avatarPreview!)
-                    : null,
+                backgroundImage:
+                    avatarPreview != null ? FileImage(avatarPreview!) : null,
                 child: avatarPreview == null
                     ? const Icon(Icons.person, size: 40)
                     : null,
@@ -69,21 +70,67 @@ class _ContactInsertPageState extends State<ContactInsertPage> {
               child: const Text('Select Avatar'),
             ),
             const SizedBox(height: 20),
-            TextField(controller: nameController, decoration: const InputDecoration(labelText: 'Name')),
-            TextField(controller: phoneController, decoration: const InputDecoration(labelText: 'Phone')),
-            TextField(controller: emailController, decoration: const InputDecoration(labelText: 'Email')),
-            TextField(controller: addressController, decoration: const InputDecoration(labelText: 'Address')),
+            TextField(
+              controller: nameController,
+              decoration: const InputDecoration(labelText: 'Name'),
+            ),
+            TextField(
+              controller: phoneController,
+              keyboardType: TextInputType.phone,
+              decoration: const InputDecoration(
+                labelText: 'Phone (+60)',
+                hintText: 'e.g. 1127309358',
+              ),
+              inputFormatters: [
+                FilteringTextInputFormatter.digitsOnly,
+                LengthLimitingTextInputFormatter(10),
+              ],
+            ),
+            TextField(
+              controller: emailController,
+              keyboardType: TextInputType.emailAddress,
+              decoration: const InputDecoration(
+                labelText: 'Email',
+                hintText: 'e.g. paul@google.com',
+              ),
+            ),
+            TextField(
+              controller: addressController,
+              decoration: const InputDecoration(labelText: 'Address'),
+            ),
             const SizedBox(height: 20),
             ElevatedButton(
               onPressed: () async {
-                // ✅ 第 3 段：创建联系人并插入数据库
+                //* ------------------ Validate email & phone format ------------------------
+                final rawPhone = phoneController.text.trim();
+                final formattedPhone = '+60 ${rawPhone}';
+                final email = emailController.text.trim();
+                final phoneRegex = RegExp(r'^\d{9,10}$');
+                final emailRegex = RegExp(r'^\S+@\S+\.\S+$');
+
+                if (!phoneRegex.hasMatch(rawPhone)) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                        content: Text('Invalid phone number format.')),
+                  );
+                  return;
+                }
+
+                if (!emailRegex.hasMatch(email)) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Invalid email format.')),
+                  );
+                  return;
+                }
+
                 final contact = Contact(
-                  name: nameController.text,
-                  phone: phoneController.text,
-                  email: emailController.text,
-                  address: addressController.text,
+                  name: nameController.text.trim(),
+                  phone: formattedPhone,
+                  email: email,
+                  address: addressController.text.trim(),
                   avatar: avatarController.text,
                 );
+
                 await DBHelper().insertContact(contact);
                 Navigator.pop(context, true);
               },
@@ -95,6 +142,7 @@ class _ContactInsertPageState extends State<ContactInsertPage> {
     );
   }
 }
+
 
 
 
