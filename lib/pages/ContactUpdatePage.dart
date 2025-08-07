@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:image_picker/image_picker.dart';
 import 'package:flutter/services.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:path/path.dart' as p;
 import '../models/contact.dart';
 import '../services/db_helper.dart';
 
@@ -28,8 +29,7 @@ class _ContactUpdatePageState extends State<ContactUpdatePage> {
   void initState() {
     super.initState();
     nameController = TextEditingController(text: widget.contact.name);
-    
-    // Strip +60 if already exists so we only store digits
+
     final phoneRaw = widget.contact.phone.startsWith('+60 ')
         ? widget.contact.phone.substring(4)
         : widget.contact.phone;
@@ -40,7 +40,15 @@ class _ContactUpdatePageState extends State<ContactUpdatePage> {
     avatarController = TextEditingController(text: widget.contact.avatar);
 
     if (widget.contact.avatar.isNotEmpty) {
-      avatarPreview = File(widget.contact.avatar);
+      getApplicationDocumentsDirectory().then((appDir) {
+        final fullPath = p.join(appDir.path, widget.contact.avatar);
+        final file = File(fullPath);
+        if (file.existsSync()) {
+          setState(() {
+            avatarPreview = file;
+          });
+        }
+      });
     }
   }
 
@@ -50,11 +58,16 @@ class _ContactUpdatePageState extends State<ContactUpdatePage> {
     if (pickedFile == null) return;
 
     final appDir = await getApplicationDocumentsDirectory();
-    final fileName = DateTime.now().microsecondsSinceEpoch.toString() + '.jpg';
-    final savedImage =
-        await File(pickedFile.path).copy('${appDir.path}/$fileName');
+    final imgDir = Directory(p.join(appDir.path, 'img'));
 
-    avatarController.text = savedImage.path;
+    if (!await imgDir.exists()) {
+      await imgDir.create(recursive: true);
+    }
+
+    final fileName = '${DateTime.now().microsecondsSinceEpoch}.jpg';
+    final savedImage = await File(pickedFile.path).copy(p.join(imgDir.path, fileName));
+
+    avatarController.text = p.relative(savedImage.path, from: appDir.path);
     setState(() {
       avatarPreview = savedImage;
     });
@@ -121,7 +134,6 @@ class _ContactUpdatePageState extends State<ContactUpdatePage> {
             const SizedBox(height: 20),
             ElevatedButton(
               onPressed: () async {
-                //* ------------ Validate email & phone format ------------------------
                 final rawPhone = phoneController.text.trim();
                 final formattedPhone = '+60 $rawPhone';
                 final email = emailController.text.trim();
@@ -164,6 +176,7 @@ class _ContactUpdatePageState extends State<ContactUpdatePage> {
     );
   }
 }
+
 
 
 

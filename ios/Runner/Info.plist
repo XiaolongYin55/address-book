@@ -49,5 +49,7 @@
     <string>This app requires access to your photo library to select avatar images.</string>
     <key>NSCameraUsageDescription</key>
     <string>This app requires access to your camera to take photos.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+    <string>Need access to photo library to select contact avatar</string>
 </dict>
 </plist>
