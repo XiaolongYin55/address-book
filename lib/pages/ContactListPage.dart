@@ -67,9 +67,11 @@ class _ContactListPageState extends State<ContactListPage> {
                   builder: (context, snapshot) {
                     Widget avatarWidget;
                     if (!snapshot.hasData) {
-                      avatarWidget = const CircleAvatar(child: CircularProgressIndicator());
+                      avatarWidget = const CircleAvatar(
+                          child: CircularProgressIndicator());
                     } else {
-                      final fullPath = File(p.join(snapshot.data!.path, contact.avatar));
+                      final fullPath =
+                          File(p.join(snapshot.data!.path, contact.avatar));
                       avatarWidget = fullPath.existsSync()
                           ? CircleAvatar(backgroundImage: FileImage(fullPath))
                           : CircleAvatar(
@@ -77,15 +79,20 @@ class _ContactListPageState extends State<ContactListPage> {
                                 contact.name.isNotEmpty
                                     ? contact.name.trim()[0].toUpperCase()
                                     : '?',
-                                style: const TextStyle(fontWeight: FontWeight.bold),
+                                style: const TextStyle(
+                                    fontWeight: FontWeight.bold),
                               ),
                             );
                     }
 
                     return ListTile(
-                      leading: avatarWidget,
+                      leading: SizedBox(
+                        width: 70, 
+                        height: 70, 
+                        child: avatarWidget,
+                      ),
                       title: Text(contact.name),
-                      subtitle: Text(contact.phone),
+                      subtitle: Text('${contact.phone}\n${contact.email}'),
                       trailing: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
@@ -95,7 +102,8 @@ class _ContactListPageState extends State<ContactListPage> {
                               final result = await Navigator.push(
                                 context,
                                 MaterialPageRoute(
-                                  builder: (_) => ContactUpdatePage(contact: contact),
+                                  builder: (_) =>
+                                      ContactUpdatePage(contact: contact),
                                 ),
                               );
                               if (result == true) fetchContacts();
@@ -108,15 +116,19 @@ class _ContactListPageState extends State<ContactListPage> {
                                 context: context,
                                 builder: (context) => AlertDialog(
                                   title: const Text('Delete Contact'),
-                                  content: const Text('Are you sure you want to delete this contact?'),
+                                  content: const Text(
+                                      'Are you sure you want to delete this contact?'),
                                   actions: [
                                     TextButton(
-                                      onPressed: () => Navigator.pop(context, false),
+                                      onPressed: () =>
+                                          Navigator.pop(context, false),
                                       child: const Text('Cancel'),
                                     ),
                                     TextButton(
-                                      onPressed: () => Navigator.pop(context, true),
-                                      child: const Text('Delete', style: TextStyle(color: Colors.red)),
+                                      onPressed: () =>
+                                          Navigator.pop(context, true),
+                                      child: const Text('Delete',
+                                          style: TextStyle(color: Colors.red)),
                                     ),
                                   ],
                                 ),
@@ -147,5 +159,3 @@ class _ContactListPageState extends State<ContactListPage> {
     );
   }
 }
-
-

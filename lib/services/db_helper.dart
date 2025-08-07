@@ -7,6 +7,7 @@ class DBHelper {
   factory DBHelper() => _instance;
   DBHelper._internal();
 
+  //Database Initialization
   Database? _database;
 
   Future<Database> get database async {
@@ -25,7 +26,7 @@ class DBHelper {
       onCreate: _onCreate,
     );
   }
-
+  // create table of contacts 
   Future<void> _onCreate(Database db, int version) async {
     await db.execute('''
       CREATE TABLE contacts (
@@ -38,7 +39,7 @@ class DBHelper {
       )
     ''');
   }
-
+  // methods for contactor's CRUD 
   Future<int> insertContact(Contact contact) async {
     final db = await database;
     return await db.insert('contacts', contact.toMap());

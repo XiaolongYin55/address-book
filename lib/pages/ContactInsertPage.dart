@@ -14,39 +14,44 @@ class ContactInsertPage extends StatefulWidget {
   State<ContactInsertPage> createState() => _ContactInsertPageState();
 }
 
+// Controllers to handle user inputting
 class _ContactInsertPageState extends State<ContactInsertPage> {
   final _formKey = GlobalKey<FormState>();
   final _nameController = TextEditingController();
   final _phoneController = TextEditingController();
   final _emailController = TextEditingController();
 
-  // 分字段地址输入
+  // Separate controllers for each address field
   final _streetController = TextEditingController();
   final _cityController = TextEditingController();
   final _stateController = TextEditingController();
   final _countryController = TextEditingController();
   final _postalCodeController = TextEditingController();
 
+  // temporarily save the image file selected by the user
   File? _avatarImage;
 
   Future<void> _pickImage() async {
     final picker = ImagePicker();
+    // 01 seletct an img form gallery then get the img's path
     final pickedFile = await picker.pickImage(source: ImageSource.gallery);
     if (pickedFile != null) {
       final appDir = await getApplicationDocumentsDirectory();
+      //02 Create a folder named 'img' if not exists for imgs persistence
       final imgDir = Directory(p.join(appDir.path, 'img'));
 
       if (!await imgDir.exists()) {
         await imgDir.create(recursive: true);
       }
-
+      
+      //03 generate a new path for picked img 
       final String newPath = p.join(imgDir.path, '${DateTime.now().microsecondsSinceEpoch}.jpg');
       final File newImage = await File(pickedFile.path).copy(newPath);
-
+      
+      //04 update the state
       setState(() {
         _avatarImage = newImage;
       });
-
       print('✅ Saved avatar to: $newPath');
     }
   }
@@ -56,7 +61,7 @@ class _ContactInsertPageState extends State<ContactInsertPage> {
       final rawPhone = _phoneController.text.trim();
       final formattedPhone = '+60 $rawPhone';
       final email = _emailController.text.trim();
-
+// ---------- phone & email format ----------------------
       final phoneRegex = RegExp(r'^\d{9,10}$');
       final emailRegex = RegExp(r'^\S+@\S+\.\S+$');
 
@@ -77,6 +82,7 @@ class _ContactInsertPageState extends State<ContactInsertPage> {
       String avatarRelativePath = '';
       if (_avatarImage != null) {
         final appDir = await getApplicationDocumentsDirectory();
+        //convert to a relative path
         avatarRelativePath = p.relative(_avatarImage!.path, from: appDir.path);
       }
 

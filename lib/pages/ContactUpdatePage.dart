@@ -21,7 +21,6 @@ class _ContactUpdatePageState extends State<ContactUpdatePage> {
   late TextEditingController phoneController;
   late TextEditingController emailController;
 
-  // 分字段地址控制器
   late TextEditingController streetController;
   late TextEditingController cityController;
   late TextEditingController stateController;
@@ -43,7 +42,7 @@ class _ContactUpdatePageState extends State<ContactUpdatePage> {
     emailController = TextEditingController(text: widget.contact.email);
     avatarController = TextEditingController(text: widget.contact.avatar);
 
-    // 拆分地址字段
+    // separate address ....
     final addressParts = widget.contact.address.split(',').map((e) => e.trim()).toList();
     streetController = TextEditingController(text: addressParts.length > 0 ? addressParts[0] : '');
     cityController = TextEditingController(text: addressParts.length > 1 ? addressParts[1] : '');
